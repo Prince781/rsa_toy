@@ -68,11 +68,12 @@ struct RSAKey rsa_genkey(void) {
 	// 2. pick e coprime with (p-1)(q-1)
 	// TODO: find better method
 	do {	// slow
-		e = get_rand(false) % t;
+		e = get_rand(true) % t;
 		if (e < 0)
 			e += t;
 	} while (gcd(e, t) != 1);
 	key.pub.e = e;
+	get_rand(false);	// close fd to /dev/random
 
 	// 3. find inverse of e mod (p-1)(q-1)
 	d = modinv(e, t);

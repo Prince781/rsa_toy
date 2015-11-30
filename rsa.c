@@ -6,6 +6,8 @@
 #include <stdio.h>	// printf(), perror()
 #include <errno.h>	// errno
 
+const struct RSAKey KEY_NULL = { { 0L, 0L }, { 0L, 0L, 0L } };
+
 static void gen_primes(long *p, long *q, long min_n) {
 	long f = 5;
 	long f2; 
@@ -93,6 +95,51 @@ int rsa_key_save(void *key, size_t size, const char *filename) {
 	fwrite(key, size, 1, file);
 
 	return fclose(file);
+}
+
+struct RSAKey rsa_key_load(const char *pub_file, const char *priv_file) {
+	struct RSAKey key;
+	FILE *pub, *priv;
+
+	if ((pub = fopen(pub_file, "r")) == NULL) {
+		perror(strerror(errno));
+		return KEY_NULL;
+	}
+
+	if ((priv = fopen(priv_file, "r")) == NULL) {
+		perror(strerror(errno));
+		fclose(pub);
+		return KEY_NULL;
+	}
+
+	// read in key details (public, private)
+	
+	if (fread(&key.pub, 1, sizeof(key.pub), pub) != sizeof(key.pub)) {
+		fprintf(stderr, "could not read pubkey\n");
+		perror(strerror(errno));
+		key = KEY_NULL;
+	}
+
+	if (fread(&key.priv, 1, sizeof(key.priv), priv) != sizeof(key.priv)) {
+		fprintf(stderr, "could not read privkey\n");
+		perror(strerror(errno));
+		key = KEY_NULL;
+	}
+
+	fclose(pub);
+	fclose(priv);
+
+	return key;
+}
+
+const char *rsa_key_tostr(struct RSAKey key) {
+	static char buf[1024];
+
+	snprintf(buf, sizeof(buf), 
+			"{pub = { n: %ld, e: %ld }, priv = { p: %ld, q: %ld, d: %ld }}",
+			key.pub.n, key.pub.e, key.priv.p, key.priv.q, key.priv.d);
+
+	return buf;
 }
 
 /**

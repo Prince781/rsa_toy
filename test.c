@@ -1,8 +1,9 @@
 // cc *.c -o rsa_test && ./rsa_test
 #include "rsa.h"
-#include <stdio.h>
-#include <string.h>
+#include <stdio.h>	// perror()
+#include <string.h>	// strerror(), memcmp()
 #include <stdlib.h>	// exit(), atoi()
+#include <errno.h>	// errno
 
 // prints each byte
 void print_data(const void *data, size_t size, unsigned cols) {
@@ -18,7 +19,17 @@ void print_data(const void *data, size_t size, unsigned cols) {
 	}
 }
 
-int main(int argc, char *argv[]) {
+void test_load_key(void) {
+	struct RSAKey key = KEY_NULL;
+
+	key = rsa_key_load("key.pub", "key.priv");
+	if (memcmp(&key, &KEY_NULL, sizeof(key)) == 0)
+		fprintf(stderr, "could not load RSA key\n");
+	else
+		printf("loaded RSA key\n");
+}
+
+void test_genkey(void) {
 	struct RSAKey key;
 	const char *text = "This is testing text.";
 	size_t size = strlen(text) + 1;
@@ -30,8 +41,7 @@ int main(int argc, char *argv[]) {
 	size_t dec_size;
 
 	key = rsa_genkey();
-	printf("pubkey = {n:%ld, e:%ld}\n", key.pub.n, key.pub.e);
-	printf("privkey = {d:%ld}\n", key.priv.d);
+	printf("key = %s\n", rsa_key_tostr(key));
 	printf("data (%zu bytes):\n", size);
 	print_data(text, size, 80);
 	printf("\n");
@@ -63,6 +73,66 @@ int main(int argc, char *argv[]) {
 		printf("failed to save private key\n");
 	else
 		printf("saved private key to key.priv\n");
+}
+
+int main(int argc, char *argv[]) {
+	if (argc != 4) {
+		test_genkey();
+		return 0;
+	}
+	struct RSAKey key;
+	const char *cmd = argv[1];
+	const char *fname = argv[2];
+	const char *oname = argv[3];
+	FILE *file, *output;
+	unsigned char buffer[4096];
+	size_t bufsize = 0;
+
+	if (strcmp(cmd, "encrypt") == 0 || strcmp(cmd, "decrypt") == 0) {
+		char *outbuf;
+		key = rsa_key_load("key.pub", "key.priv");
+		if (memcmp(&key, &KEY_NULL, sizeof(key)) == 0)
+			return 1;
+
+		if ((file = fopen(fname, "r")) == NULL) {
+			fprintf(stderr, "error opening %s\n", fname);
+			perror(strerror(errno));
+			return 1;
+		}
+
+		if ((output = fopen(oname, "w")) == NULL) {
+			fprintf(stderr, "error opening %s\n", oname);
+			perror(strerror(errno));
+			fclose(file);
+			return 1;
+		}
+
+		while ((bufsize = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+			printf("input (%s):\n", fname);
+			print_data(buffer, bufsize, 80);
+			printf("\n");
+
+			if (*cmd == 'e')
+				outbuf = rsa_encrypt(key.pub, buffer, &bufsize);
+			else
+				outbuf = rsa_decrypt(key, buffer, &bufsize);
+
+			printf("output (%s):\n", oname);
+			print_data(outbuf, bufsize, 80);
+			printf("\n");
+
+			fwrite(outbuf, 1, bufsize, output);
+			free(outbuf);
+		}
+
+		fclose(file);
+		fclose(output);
+	} else {
+		fprintf(stderr, "usage: %s encrypt [plain] [out]\n", argv[0]);
+		fprintf(stderr, "usage: %s decrypt [encoded] [out]\n", argv[0]);
+		fprintf(stderr, "(key.pub and key.priv must exist)\n");
+		return 1;
+	}
 
 	return 0;
 }

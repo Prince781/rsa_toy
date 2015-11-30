@@ -18,9 +18,19 @@ struct RSAKey {
 	struct PrivKey	priv;
 };
 
+extern const struct RSAKey KEY_NULL;
+
 struct RSAKey rsa_genkey(void);
 
+// I/O
+
 int rsa_key_save(void *key, size_t size, const char *filename);
+
+struct RSAKey rsa_key_load(const char *pub_file, const char *priv_file);
+
+// I/O
+
+const char *rsa_key_tostr(struct RSAKey key);
 
 /**
  * given @key, @buf, and a reference to @sz,

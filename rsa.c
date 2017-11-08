@@ -88,7 +88,7 @@ int rsa_key_save(void *key, size_t size, const char *filename) {
 	FILE *file;
 
 	if ((file = fopen(filename, "w")) == NULL) {
-		perror(strerror(errno));
+		perror("fopen");
 		return -1;
 	}
 
@@ -102,12 +102,12 @@ struct RSAKey rsa_key_load(const char *pub_file, const char *priv_file) {
 	FILE *pub, *priv;
 
 	if ((pub = fopen(pub_file, "r")) == NULL) {
-		perror(strerror(errno));
+		perror("fopen");
 		return KEY_NULL;
 	}
 
 	if ((priv = fopen(priv_file, "r")) == NULL) {
-		perror(strerror(errno));
+		perror("fopen");
 		fclose(pub);
 		return KEY_NULL;
 	}
@@ -116,13 +116,13 @@ struct RSAKey rsa_key_load(const char *pub_file, const char *priv_file) {
 	
 	if (fread(&key.pub, 1, sizeof(key.pub), pub) != sizeof(key.pub)) {
 		fprintf(stderr, "could not read pubkey\n");
-		perror(strerror(errno));
+		perror("fread");
 		key = KEY_NULL;
 	}
 
 	if (fread(&key.priv, 1, sizeof(key.priv), priv) != sizeof(key.priv)) {
 		fprintf(stderr, "could not read privkey\n");
-		perror(strerror(errno));
+		perror("fread");
 		key = KEY_NULL;
 	}
 

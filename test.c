@@ -96,13 +96,13 @@ int main(int argc, char *argv[]) {
 
 		if ((file = fopen(fname, "r")) == NULL) {
 			fprintf(stderr, "error opening %s\n", fname);
-			perror(strerror(errno));
+			perror("fopen");
 			return 1;
 		}
 
 		if ((output = fopen(oname, "w")) == NULL) {
 			fprintf(stderr, "error opening %s\n", oname);
-			perror(strerror(errno));
+			perror("fopen");
 			fclose(file);
 			return 1;
 		}

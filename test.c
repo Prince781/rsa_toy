@@ -76,19 +76,17 @@ void test_genkey(void) {
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 4) {
-		test_genkey();
-		return 0;
-	}
 	struct RSAKey key;
-	const char *cmd = argv[1];
+	const char *cmd = argv[1] ? argv[1] : "";
 	const char *fname = argv[2];
 	const char *oname = argv[3];
 	FILE *file, *output;
 	unsigned char buffer[4096];
 	size_t bufsize = 0;
 
-	if (strcmp(cmd, "encrypt") == 0 || strcmp(cmd, "decrypt") == 0) {
+    if (strcmp(cmd, "test") == 0) {
+		test_genkey();
+    } else if (strcmp(cmd, "encrypt") == 0 || strcmp(cmd, "decrypt") == 0) {
 		char *outbuf;
 		key = rsa_key_load("key.pub", "key.priv");
 		if (memcmp(&key, &KEY_NULL, sizeof(key)) == 0)
@@ -128,9 +126,13 @@ int main(int argc, char *argv[]) {
 		fclose(file);
 		fclose(output);
 	} else {
-		fprintf(stderr, "usage: %s encrypt [plain] [out]\n", argv[0]);
-		fprintf(stderr, "usage: %s decrypt [encoded] [out]\n", argv[0]);
-		fprintf(stderr, "(key.pub and key.priv must exist)\n");
+        int n1, n2;
+        fprintf(stderr, "usage: %n%s%n <cmd> [args...]\n", &n1, argv[0], &n2);
+        fprintf(stderr, "       %2$*1$s test\n" 
+                        "       %2$*1$s encrypt [plain] [out]\n"
+                        "       %2$*1$s decrypt [encoded] [out]\n"
+                        "(key.pub and key.priv must exist)\n", 
+                        n2-n1, " ");
 		return 1;
 	}
 

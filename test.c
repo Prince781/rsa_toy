@@ -129,8 +129,8 @@ int main(int argc, char *argv[]) {
         int n1, n2;
         fprintf(stderr, "usage: %n%s%n <cmd> [args...]\n", &n1, argv[0], &n2);
         fprintf(stderr, "       %2$*1$s test\n" 
-                        "       %2$*1$s encrypt [plain] [out]\n"
-                        "       %2$*1$s decrypt [encoded] [out]\n"
+                        "       %2$*1$s encrypt <input> <output.enc>\n"
+                        "       %2$*1$s decrypt <input.enc> <output>\n"
                         "(key.pub and key.priv must exist)\n", 
                         n2-n1, " ");
 		return 1;
